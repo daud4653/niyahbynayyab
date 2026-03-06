@@ -12,6 +12,7 @@ const productSchema = new mongoose.Schema(
     image: { type: String, default: '', trim: true },
     images: [{ type: String, trim: true }],
     sizes: [{ type: String, trim: true }],
+    sizeInventory: { type: Map, of: Number, default: {} },
     color: { type: String, default: '', trim: true },
     category: { type: String, default: '', trim: true },
     isActive: { type: Boolean, default: true },

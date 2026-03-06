@@ -30,7 +30,16 @@ export default function ProductDetail() {
 
   const size = selectedSizes[id] || null;
   const inventory = product?.inventory;
-  const outOfStock = typeof inventory === 'number' && inventory <= 0;
+  const sizeInv = product?.sizeInventory || {};
+
+  function getSizeCount(s) {
+    return sizeInv[s] !== undefined ? sizeInv[s] : null;
+  }
+
+  const selectedSizeCount = size ? getSizeCount(size) : null;
+  const outOfStock = selectedSizeCount !== null
+    ? selectedSizeCount <= 0
+    : (typeof inventory === 'number' && inventory <= 0);
 
   function handleAdd() {
     if (!product) return;
@@ -115,7 +124,12 @@ export default function ProductDetail() {
               {product.currency} {formatNumberPrice(product.price)}
             </p>
 
-            {typeof inventory === 'number' && (
+            {selectedSizeCount !== null && (
+              <p className={`text-xs font-bold tracking-widest uppercase ${selectedSizeCount <= 0 ? 'text-red-brand' : selectedSizeCount <= 2 ? 'text-orange-500' : 'text-ink-muted'}`}>
+                {selectedSizeCount <= 0 ? 'Sold out' : selectedSizeCount <= 2 ? `Only ${selectedSizeCount} left` : `${selectedSizeCount} in stock`}
+              </p>
+            )}
+            {selectedSizeCount === null && typeof inventory === 'number' && (
               <p className={`text-xs font-bold tracking-widest uppercase ${outOfStock ? 'text-red-brand' : 'text-ink-muted'}`}>
                 {outOfStock ? 'Sold out' : `${inventory} in stock`}
               </p>
@@ -129,19 +143,32 @@ export default function ProductDetail() {
                   Size {size && <span className="text-red-brand">— {size}</span>}
                 </p>
                 <div className="flex flex-wrap gap-2.5">
-                  {product.sizes.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setSelectedSizes((prev) => ({ ...prev, [id]: s }))}
-                      className={`w-12 h-12 rounded-xl text-sm font-bold border-[1.5px] transition-all duration-150 ${
-                        size === s
-                          ? 'bg-red-brand border-red-brand text-white'
-                          : 'bg-white border-border text-ink-mid hover:border-red-brand hover:text-red-brand'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                  {product.sizes.map((s) => {
+                    const count = getSizeCount(s);
+                    const isSizeOut = count !== null && count <= 0;
+                    const isSizeFew = count !== null && count > 0 && count <= 2;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => !isSizeOut && setSelectedSizes((prev) => ({ ...prev, [id]: s }))}
+                        disabled={isSizeOut}
+                        className={`relative min-w-[3rem] px-3 h-12 rounded-xl text-sm font-bold border-[1.5px] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${
+                          size === s
+                            ? 'bg-red-brand border-red-brand text-white'
+                            : isSizeOut
+                            ? 'bg-cream border-border text-ink-muted line-through'
+                            : 'bg-white border-border text-ink-mid hover:border-red-brand hover:text-red-brand'
+                        }`}
+                      >
+                        {s}
+                        {isSizeFew && (
+                          <span className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

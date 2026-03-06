@@ -30,7 +30,10 @@ export function CartProvider({ children }) {
   function addItem(product, size = null) {
     const productId = product._id || product.id;
     const cartId = `${productId}-${size ?? 'one-size'}`;
-    const inventory = typeof product?.inventory === 'number' ? product.inventory : null;
+    const sizeInv = product.sizeInventory || {};
+    const inventory = size && sizeInv[size] !== undefined
+      ? sizeInv[size]
+      : (typeof product.inventory === 'number' ? product.inventory : null);
     setItems((prev) => {
       const existing = prev.find((i) => i.cartId === cartId);
       if (existing) {

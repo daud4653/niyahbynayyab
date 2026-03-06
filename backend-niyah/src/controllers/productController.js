@@ -19,6 +19,15 @@ function normalizeProductPayload(body = {}) {
     : [];
   const primaryImage = rawImages[0] || String(body.image || '').trim();
 
+  const rawSizeInventory = body.sizeInventory;
+  const sizeInventory = {};
+  if (rawSizeInventory && typeof rawSizeInventory === 'object') {
+    for (const [size, count] of Object.entries(rawSizeInventory)) {
+      const n = Number(count);
+      if (size && Number.isFinite(n) && n >= 0) sizeInventory[size] = Math.floor(n);
+    }
+  }
+
   return {
     name: String(body.name || '').trim(),
     tagline: String(body.tagline || '').trim(),
@@ -32,6 +41,7 @@ function normalizeProductPayload(body = {}) {
     sizes: Array.isArray(body.sizes)
       ? body.sizes.map((s) => String(s).trim()).filter(Boolean)
       : [],
+    sizeInventory,
     color: String(body.color || '').trim(),
     category: String(body.category || '').trim(),
     isActive: body.isActive !== false,

@@ -109,11 +109,12 @@ export async function createOrder(req, res) {
     }
   }
 
-  const productQty = new Map();
+  // Track qty by productId+size so we can deduct per-size inventory
+  const productSizeQty = new Map();
   for (const item of items) {
     if (!item.productId) continue;
-    const key = String(item.productId);
-    productQty.set(key, (productQty.get(key) || 0) + item.qty);
+    const key = `${item.productId}:${item.size || ''}`;
+    productSizeQty.set(key, { productId: item.productId, size: item.size || '', qty: (productSizeQty.get(key)?.qty || 0) + item.qty });
   }
 
   const { subtotal } = calculateTotals(items);
@@ -126,7 +127,7 @@ export async function createOrder(req, res) {
     let createdOrder;
 
     await session.withTransaction(async () => {
-      for (const [productId, qty] of productQty.entries()) {
+      for (const { productId, size, qty } of productSizeQty.values()) {
         const product = await Product.findById(productId).session(session);
         if (!product || !product.isActive) {
           const err = new Error('One or more products are no longer available.');
@@ -134,13 +135,32 @@ export async function createOrder(req, res) {
           throw err;
         }
 
-        if (typeof product.inventory === 'number') {
+        // Per-size inventory deduction
+        const sizeInvCount = size
+          ? (product.sizeInventory instanceof Map
+              ? product.sizeInventory.get(size)
+              : product.sizeInventory?.[size])
+          : undefined;
+
+        if (size && sizeInvCount !== undefined && sizeInvCount !== null) {
+          const sizeKey = `sizeInventory.${size}`;
+          const updated = await Product.findOneAndUpdate(
+            { _id: productId, isActive: true, [sizeKey]: { $gte: qty } },
+            { $inc: { [sizeKey]: -qty } },
+            { new: true, session }
+          );
+          if (!updated) {
+            const err = new Error(`Not enough stock for size ${size} of "${product.name}".`);
+            err.status = 400;
+            throw err;
+          }
+        } else if (typeof product.inventory === 'number') {
+          // Fall back to global inventory
           const updated = await Product.findOneAndUpdate(
             { _id: productId, isActive: true, inventory: { $gte: qty } },
             { $inc: { inventory: -qty } },
             { new: true, session }
           );
-
           if (!updated) {
             const err = new Error(`Not enough inventory for "${product.name}".`);
             err.status = 400;

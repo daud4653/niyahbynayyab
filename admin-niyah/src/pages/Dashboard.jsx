@@ -7,7 +7,7 @@ import logo from '../assets/logo.jpeg';
 
 const EMPTY_FORM = {
   name: '', category: '', tagline: '', color: '', description: '',
-  price: '', inventory: '', currency: 'PKR', badge: '', images: [''], sizesText: '',
+  price: '', inventory: '', currency: 'PKR', badge: '', images: [''], sizesText: '', sizeInventory: {},
 };
 
 const ORDER_STATUSES = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'];
@@ -83,6 +83,7 @@ export default function Dashboard() {
       badge: selectedProduct.badge || '',
       images: imgs,
       sizesText: Array.isArray(selectedProduct.sizes) ? selectedProduct.sizes.join(', ') : '',
+      sizeInventory: selectedProduct.sizeInventory || {},
     });
   }, [selectedProduct]);
 
@@ -131,6 +132,7 @@ export default function Dashboard() {
   }
 
   function resetToNew() { setIsCreatingNew(true); setSelectedId(null); setForm(EMPTY_FORM); setSaved(''); setUploadError(''); }
+  function handleSizeInventoryChange(size, val) { setForm((p) => ({ ...p, sizeInventory: { ...p.sizeInventory, [size]: val } })); setSaved(''); }
   function handleChange(e) { setForm((p) => ({ ...p, [e.target.name]: e.target.value })); setSaved(''); }
   function handleImageChange(idx, val) { setForm((p) => { const imgs = [...p.images]; imgs[idx] = val; return { ...p, images: imgs }; }); setSaved(''); }
   function addImageField() { setForm((p) => ({ ...p, images: [...p.images, ''] })); }
@@ -140,13 +142,20 @@ export default function Dashboard() {
     e.preventDefault();
     if (!token) return;
     const cleanImages = form.images.map((u) => u.trim()).filter(Boolean);
+    const parsedSizes = form.sizesText.split(',').map((s) => s.trim()).filter(Boolean);
+    const sizeInventory = parsedSizes.reduce((acc, s) => {
+      const val = form.sizeInventory[s];
+      if (val !== '' && val !== undefined && val !== null) acc[s] = Number(val);
+      return acc;
+    }, {});
     const payload = {
       name: form.name, category: form.category, tagline: form.tagline, color: form.color,
       description: form.description, price: toNumberPrice(form.price),
       inventory: form.inventory === '' ? null : Number(form.inventory),
       currency: form.currency || 'PKR', badge: form.badge,
       images: cleanImages, image: cleanImages[0] || '',
-      sizes: form.sizesText.split(',').map((s) => s.trim()).filter(Boolean),
+      sizes: parsedSizes,
+      sizeInventory,
     };
     setSaving(true);
     try {
@@ -400,6 +409,27 @@ export default function Dashboard() {
                     <label className={lbl}>Sizes (comma separated)</label>
                     <input name="sizesText" value={form.sizesText} onChange={handleChange} placeholder="XS, S, M, L, XL" className={input} />
                   </div>
+
+                  {form.sizesText.split(',').map((s) => s.trim()).filter(Boolean).length > 0 && (
+                    <div>
+                      <label className={lbl}>Inventory per size</label>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                        {form.sizesText.split(',').map((s) => s.trim()).filter(Boolean).map((s) => (
+                          <div key={s}>
+                            <p className="text-xs font-bold text-ink-mid mb-1">{s}</p>
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              value={form.sizeInventory[s] ?? ''}
+                              onChange={(e) => handleSizeInventoryChange(s, e.target.value)}
+                              className={input}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </section>
 
                 <div className="flex items-center justify-end gap-4 pt-1">
