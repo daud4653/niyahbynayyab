@@ -1,7 +1,13 @@
 import { Resend } from 'resend';
 import { env } from '../config/env.js';
 
-const resend = new Resend(env.resendApiKey);
+let _resend = null;
+function getResend() {
+  if (!env.resendApiKey) return null;
+  if (!_resend) _resend = new Resend(env.resendApiKey);
+  return _resend;
+}
+
 const FROM = 'niyah <onboarding@resend.dev>';
 const RED = '#cc0000';
 const CREAM = '#f5f0ee';
@@ -23,7 +29,8 @@ function itemsTableHtml(items, currency) {
 }
 
 export async function sendAdminNewOrderEmail(order) {
-  if (!env.resendApiKey || !env.adminEmail) return;
+  const resend = getResend();
+  if (!resend || !env.adminEmail) return;
 
   const orderId = String(order._id).slice(-8).toUpperCase();
   const proofSection = order.payment?.proofUrl
@@ -84,7 +91,8 @@ export async function sendAdminNewOrderEmail(order) {
 }
 
 export async function sendCustomerStatusEmail(order) {
-  if (!env.resendApiKey) return;
+  const resend = getResend();
+  if (!resend) return;
 
   const { status } = order;
   const orderId = String(order._id).slice(-8).toUpperCase();
