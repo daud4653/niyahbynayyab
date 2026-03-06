@@ -486,6 +486,22 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
+                  {order.payment?.proofUrl && (
+                    <div className="mt-4">
+                      <p className="text-xs font-bold tracking-wider uppercase text-ink-muted mb-2">Payment Screenshot</p>
+                      <a href={order.payment.proofUrl} target="_blank" rel="noreferrer" className="inline-block">
+                        <img
+                          src={order.payment.proofUrl}
+                          alt="Payment proof"
+                          className="max-h-64 rounded-xl border border-border object-contain bg-cream-dark hover:opacity-90 transition-opacity"
+                        />
+                      </a>
+                      <p className="text-[11px] text-ink-muted mt-1">Click to open full size</p>
+                    </div>
+                  )}
+                  {!order.payment?.proofUrl && (
+                    <p className="text-xs text-ink-muted mt-4 italic">No screenshot uploaded — check Instagram DMs.</p>
+                  )}
                 </article>
               ))}
             </div>

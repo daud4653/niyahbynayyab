@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
+import { cloudinary } from '../config/cloudinary.js';
+import { sendAdminNewOrderEmail, sendCustomerStatusEmail } from '../services/email.js';
 
 const ALLOWED_STATUS = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
@@ -44,25 +46,32 @@ function calculateTotals(items = []) {
   );
 }
 
+function uploadBufferToCloudinary(buffer, mimetype) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'niyah/payments', resource_type: 'image' },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
 export async function createOrder(req, res) {
   let rawCustomer = req.body?.customer;
   let rawItems = req.body?.items;
   const paymentMethod = String(req.body?.paymentMethod || '').trim();
 
   if (typeof rawCustomer === 'string') {
-    try {
-      rawCustomer = JSON.parse(rawCustomer);
-    } catch {
-      return res.status(400).json({ message: 'Invalid customer payload' });
-    }
+    try { rawCustomer = JSON.parse(rawCustomer); }
+    catch { return res.status(400).json({ message: 'Invalid customer payload' }); }
   }
 
   if (typeof rawItems === 'string') {
-    try {
-      rawItems = JSON.parse(rawItems);
-    } catch {
-      return res.status(400).json({ message: 'Invalid items payload' });
-    }
+    try { rawItems = JSON.parse(rawItems); }
+    catch { return res.status(400).json({ message: 'Invalid items payload' }); }
   }
 
   const customer = normalizeCustomer(rawCustomer);
@@ -71,12 +80,6 @@ export async function createOrder(req, res) {
   if (!paymentMethod || !['bank_transfer', 'wallet_transfer'].includes(paymentMethod)) {
     return res.status(400).json({ message: 'Invalid payment method' });
   }
-
-  if (!req.file) {
-    return res.status(400).json({ message: 'Payment proof screenshot is required' });
-  }
-
-  const paymentProofUrl = `/uploads/payments/${req.file.filename}`;
 
   if (!customer.firstName || !customer.lastName || !customer.email || !customer.phone || !customer.address || !customer.city) {
     return res.status(400).json({ message: 'All required customer fields must be provided' });
@@ -96,6 +99,16 @@ export async function createOrder(req, res) {
     }
   }
 
+  // Upload payment proof to Cloudinary if provided
+  let paymentProofUrl = '';
+  if (req.file) {
+    try {
+      paymentProofUrl = await uploadBufferToCloudinary(req.file.buffer, req.file.mimetype);
+    } catch {
+      return res.status(500).json({ message: 'Failed to upload payment proof' });
+    }
+  }
+
   const productQty = new Map();
   for (const item of items) {
     if (!item.productId) continue;
@@ -104,7 +117,7 @@ export async function createOrder(req, res) {
   }
 
   const { subtotal } = calculateTotals(items);
-  const shipping = subtotal >= 5000 ? 0 : 300;
+  const shipping = 300;
   const total = subtotal + shipping;
   const currency = items[0]?.currency || 'PKR';
 
@@ -157,6 +170,9 @@ export async function createOrder(req, res) {
       );
       createdOrder = orders[0];
     });
+
+    // Send admin notification (non-blocking)
+    sendAdminNewOrderEmail(createdOrder).catch((err) => console.error('Admin email failed:', err));
 
     return res.status(201).json({
       id: createdOrder._id,
@@ -224,6 +240,9 @@ export async function updateOrderStatus(req, res) {
   if (!updated) {
     return res.status(404).json({ message: 'Order not found' });
   }
+
+  // Send customer status email (non-blocking)
+  sendCustomerStatusEmail(updated).catch((err) => console.error('Customer email failed:', err));
 
   return res.json(updated);
 }

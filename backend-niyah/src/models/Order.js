@@ -30,7 +30,7 @@ const orderSchema = new mongoose.Schema(
         enum: ['bank_transfer', 'wallet_transfer'],
         required: true,
       },
-      proofUrl: { type: String, required: true, trim: true },
+      proofUrl: { type: String, default: '', trim: true },
       status: {
         type: String,
         enum: ['submitted', 'verified', 'rejected'],

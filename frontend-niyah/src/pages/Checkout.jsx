@@ -28,7 +28,7 @@ export default function Checkout() {
   const [paymentProof, setPaymentProof] = useState(null);
   const paymentProofInputRef = useRef(null);
 
-  const shipping = subtotal >= 5000 ? 0 : 300;
+  const shipping = 300;
   const total = subtotal + shipping;
   const currency = items[0]?.currency ?? 'PKR';
 
@@ -82,7 +82,7 @@ export default function Checkout() {
     }
 
     if (!paymentProof) {
-      setErrors((prev) => ({ ...prev, paymentProof: 'Upload a payment screenshot' }));
+      setErrors((prev) => ({ ...prev, paymentProof: 'Please upload your payment screenshot' }));
       return;
     }
 
@@ -224,7 +224,7 @@ export default function Checkout() {
               </p>
 
               <div className="space-y-3">
-                <label className="flex items-start gap-3 p-4 rounded-2xl border border-border bg-cream/60">
+                <label className={`flex items-start gap-3 p-4 rounded-2xl border bg-cream/60 cursor-pointer transition-colors ${paymentMethod === 'bank_transfer' ? 'border-red-brand' : 'border-border'}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -234,12 +234,14 @@ export default function Checkout() {
                     className="mt-1"
                   />
                   <div>
-                    <p className="font-semibold text-ink">Bank account transfer</p>
-                    <p className="text-xs text-ink-muted mt-1">Transfer via your bank app and upload the receipt screenshot.</p>
+                    <p className="font-semibold text-ink">Bank Transfer — Meezan Bank</p>
+                    <p className="text-xs text-ink-muted mt-1">Account name: <span className="font-bold text-ink">Asima Tariq</span></p>
+                    <p className="text-xs text-ink-muted mt-0.5">Account number: <span className="font-bold text-ink tracking-wide">11450104290243</span></p>
+                    <p className="text-xs text-ink-muted mt-0.5">Transfer via your banking app and upload the receipt below.</p>
                   </div>
                 </label>
 
-                <label className="flex items-start gap-3 p-4 rounded-2xl border border-border bg-cream/60">
+                <label className={`flex items-start gap-3 p-4 rounded-2xl border bg-cream/60 cursor-pointer transition-colors ${paymentMethod === 'wallet_transfer' ? 'border-red-brand' : 'border-border'}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -249,15 +251,19 @@ export default function Checkout() {
                     className="mt-1"
                   />
                   <div>
-                    <p className="font-semibold text-ink">JazzCash / Easypaisa transfer</p>
-                    <p className="text-xs text-ink-muted mt-1">Send payment via wallet transfer and upload the screenshot.</p>
+                    <p className="font-semibold text-ink">Wallet Transfer — NayaPay</p>
+                    <p className="text-xs text-ink-muted mt-1">Account name: <span className="font-bold text-ink">Nayyab Tariq</span></p>
+                    <p className="text-xs text-ink-muted mt-0.5">Account number: <span className="font-bold text-ink tracking-wide">03318777518</span></p>
+                    <p className="text-xs text-ink-muted mt-0.5">Send via NayaPay and upload the screenshot below.</p>
                   </div>
                 </label>
 
                 {errors.paymentMethod && <p className="text-[11px] text-red-brand font-semibold">{errors.paymentMethod}</p>}
 
                 <div className="pt-2">
-                  <label className="block text-xs font-bold text-ink-mid tracking-wide mb-1.5">Payment proof screenshot</label>
+                  <label className="block text-xs font-bold text-ink-mid tracking-wide mb-1.5">
+                    Payment proof screenshot <span className="text-red-brand">*</span>
+                  </label>
                   <input
                     ref={paymentProofInputRef}
                     type="file"
@@ -266,29 +272,41 @@ export default function Checkout() {
                     className="hidden"
                     id="payment-proof-input"
                   />
-                  <div className="flex flex-wrap items-center gap-2">
+
+                  {!paymentProof ? (
                     <label
                       htmlFor="payment-proof-input"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-white hover:bg-cream cursor-pointer text-sm text-ink"
+                      className={`flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed rounded-2xl py-8 px-4 cursor-pointer transition-colors ${errors.paymentProof ? 'border-red-brand/60 bg-red-light/20' : 'border-border hover:border-red-brand/50 hover:bg-cream-dark/40'}`}
                     >
-                      Upload Screenshot
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      <span className="text-sm font-semibold text-ink-mid">Tap to upload screenshot</span>
+                      <span className="text-xs text-ink-muted">JPG, PNG · max 6 MB</span>
                     </label>
-                    {paymentProof && (
+                  ) : (
+                    <div className="relative rounded-2xl overflow-hidden border border-border bg-cream-dark">
+                      <img
+                        src={URL.createObjectURL(paymentProof)}
+                        alt="Payment proof"
+                        className="w-full max-h-64 object-contain"
+                      />
                       <button
                         type="button"
                         onClick={clearPaymentProof}
-                        className="px-3 py-2 rounded-xl text-xs font-semibold border border-red-brand/30 text-red-brand hover:bg-red-light"
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-ink-muted hover:text-red-brand transition-colors"
                       >
-                        Remove
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
                       </button>
-                    )}
-                  </div>
-                  {paymentProof && (
-                    <p className="text-xs text-ink-muted mt-1">
-                      Selected: <span className="font-semibold text-ink">{paymentProof.name}</span>
-                    </p>
+                      <div className="px-4 py-2 border-t border-border">
+                        <p className="text-xs text-ink-muted truncate">{paymentProof.name}</p>
+                      </div>
+                    </div>
                   )}
-                  {errors.paymentProof && <p className="text-[11px] text-red-brand mt-1 font-semibold">{errors.paymentProof}</p>}
+
+                  {errors.paymentProof && <p className="text-[11px] text-red-brand mt-1.5 font-semibold">{errors.paymentProof}</p>}
                 </div>
               </div>
             </section>
@@ -329,9 +347,7 @@ export default function Checkout() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-ink-muted">Shipping</span>
-                  <span className={`font-semibold ${shipping === 0 ? 'text-green-600' : 'text-ink'}`}>
-                    {shipping === 0 ? 'Free' : formatPrice(shipping, currency)}
-                  </span>
+                  <span className="font-semibold text-ink">{formatPrice(shipping, currency)}</span>
                 </div>
               </div>
 
