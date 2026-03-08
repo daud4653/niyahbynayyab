@@ -28,7 +28,7 @@ export default function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-6 flex items-center h-[88px] gap-8">
         {/* Logo — left-aligned, fits in navbar height */}
-        <Link to="/" className="flex-shrink-0 flex items-center">
+        <Link to="/" className="-ml-3 md:ml-0 flex-shrink-0 flex items-center">
           <img
             src={logo}
             alt="niyah"

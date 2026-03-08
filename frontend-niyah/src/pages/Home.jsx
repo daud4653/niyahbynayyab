@@ -1,21 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import Lottie from 'lottie-react';
+import whoWeAre from '../assets/whoweare.jpg';
 import { useProduct } from '../context/ProductContext';
 import ProductCard from '../components/ProductCard';
 import { formatNumberPrice } from '../utils/price';
-import shoppingAnimation from '../assets/diwali-shopping.json';
 
 const BENEFITS = [
-  {
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-4" />
-      </svg>
-    ),
-    title: 'Easy Returns',
-    desc: '7-day hassle-free returns',
-  },
   {
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -23,7 +13,7 @@ const BENEFITS = [
       </svg>
     ),
     title: 'Ethically Made',
-    desc: 'Crafted in Pakistan with care',
+    desc: 'Carefully crafted in Pakistan',
   },
   {
     icon: (
@@ -32,8 +22,17 @@ const BENEFITS = [
         <path d="M12 12C12 12 17 9 17 5" />
       </svg>
     ),
-    title: 'Sustainable',
+    title: 'Consciously Made',
     desc: 'Natural fabrics, minimal waste',
+  },
+  {
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+      </svg>
+    ),
+    title: 'Limited Pieces',
+    desc: 'Small batch production',
   },
 ];
 
@@ -201,8 +200,8 @@ export default function Home() {
       <section id="about" className="py-24 bg-cream">
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 lg:gap-24 items-center">
           <div className="relative max-w-sm md:max-w-none mx-auto">
-            <div className="aspect-square rounded-[2rem] overflow-hidden shadow-xl bg-cream-dark flex items-center justify-center">
-              <Lottie animationData={shoppingAnimation} loop className="w-full h-full" />
+            <div className="aspect-square rounded-[2rem] overflow-hidden shadow-xl bg-cream-dark">
+              <img src={whoWeAre} alt="Who we are" loading="lazy" decoding="async" className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-red-brand rounded-3xl -z-10" />
           </div>
@@ -212,11 +211,10 @@ export default function Home() {
               Made with<br />a reason.
             </h2>
             <p className="text-base text-ink-mid leading-relaxed mb-5 max-w-md">
-              niyah is more than a label — it&apos;s a reminder to move through the world on purpose. Every stitch,
-              every silhouette, every choice is deliberate. We make clothes that feel like you remembered who you are.
+              Niyah is more than just a label — it represents intention, individuality, and thoughtful design. Every stitch, every fitted silhouette, and every design is created with purpose, focusing on pieces that feel distinctive and personal.
             </p>
             <p className="text-base text-ink-mid leading-relaxed mb-8 max-w-md">
-              Based in Pakistan, crafted for women everywhere.
+              Based in Pakistan and crafted with care, our collections are produced in limited quantities with attention to detail, quality fabrics, and a more conscious approach to fashion.
             </p>
             <Link to="/#shop" className="btn-red">Explore the Collection</Link>
           </div>
