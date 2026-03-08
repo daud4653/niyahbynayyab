@@ -131,7 +131,7 @@ export default function Checkout() {
 
   if (placed) {
     return (
-      <main className="min-h-screen pt-[88px] bg-cream flex items-center justify-center px-6">
+      <main className="min-h-screen pt-[108px] bg-cream flex items-center justify-center px-6">
         <div className="max-w-md w-full text-center py-16">
           <div className="w-20 h-20 rounded-full bg-green-50 border-4 border-green-200 flex items-center justify-center mx-auto mb-6">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -156,7 +156,7 @@ export default function Checkout() {
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen pt-[88px] bg-cream flex items-center justify-center px-6">
+      <main className="min-h-screen pt-[108px] bg-cream flex items-center justify-center px-6">
         <div className="text-center py-20">
           <p className="font-brand font-bold text-2xl text-ink mb-3">Your bag is empty</p>
           <p className="text-ink-muted mb-8">Add items before checking out.</p>
@@ -172,7 +172,7 @@ export default function Checkout() {
     }`;
 
   return (
-    <main className="min-h-screen pt-[88px] bg-cream">
+    <main className="min-h-screen pt-[108px] bg-cream">
       <div className="max-w-5xl mx-auto px-6 py-12">
         <div className="mb-10">
           <Link to="/" className="inline-flex items-center gap-2 text-xs font-bold text-ink-muted hover:text-red-brand transition-colors mb-4 uppercase tracking-widest">

@@ -52,7 +52,7 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <main className="pt-[88px] min-h-screen bg-cream px-6 py-12">
+      <main className="pt-[108px] min-h-screen bg-cream px-6 py-12">
         <p className="text-ink-muted">Loading product...</p>
       </main>
     );
@@ -60,7 +60,7 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <main className="pt-[88px] min-h-screen bg-cream px-6 py-12">
+      <main className="pt-[108px] min-h-screen bg-cream px-6 py-12">
         <Link to="/" className="text-sm font-semibold text-red-brand">Back to shop</Link>
         <p className="mt-6 text-ink-muted">Product not found.</p>
       </main>
@@ -70,7 +70,7 @@ export default function ProductDetail() {
   const displayImage = images[activeImg] || product.image;
 
   return (
-    <main className="pt-[88px] min-h-screen bg-cream">
+    <main className="pt-[108px] min-h-screen bg-cream">
       <div className="max-w-6xl mx-auto px-6 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-xs font-bold text-ink-muted hover:text-red-brand transition-colors mb-8 uppercase tracking-widest">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

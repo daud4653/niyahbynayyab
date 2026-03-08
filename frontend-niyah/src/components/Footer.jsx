@@ -7,11 +7,14 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-6 pt-14 pb-6">
         <div className="flex flex-col md:flex-row justify-between gap-10 pb-10 border-b border-white/10">
           <div className="max-w-xs">
-            <img
-              src={logo}
-              alt="niyah"
-              className="h-[96px] w-auto object-contain mix-blend-screen opacity-90 mb-4"
-            />
+            <div className="relative overflow-hidden h-[120px] w-[130px] mb-4">
+              <img
+                src={logo}
+                alt="niyah"
+                className="absolute top-0 h-[120px] w-auto mix-blend-screen opacity-90"
+                style={{ left: '-25px' }}
+              />
+            </div>
             <p className="text-sm text-white/45 leading-relaxed">
               Made with care.<br />Worn with intention.
             </p>

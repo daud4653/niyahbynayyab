@@ -65,7 +65,7 @@ export default function Home() {
   return (
     <main>
       {/* Hero */}
-      <section className="min-h-screen pt-[88px] flex items-center bg-cream overflow-hidden">
+      <section className="min-h-screen pt-[108px] flex items-center bg-cream overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 w-full grid md:grid-cols-2 gap-12 lg:gap-20 py-16 items-center">
           <div className="order-2 md:order-1">
             <p className="text-[11px] font-bold tracking-[.18em] uppercase text-red-brand mb-5">New Season — SS&apos;26</p>
@@ -74,7 +74,7 @@ export default function Home() {
               <span className="text-red-brand">intention.</span>
             </h1>
             <p className="text-base lg:text-lg text-ink-mid leading-relaxed max-w-md mb-10">
-              Pieces designed for the woman who moves through the world on purpose — understated, refined, and always herself.
+              Refined, fitted silhouettes and distinctive designs for the woman who appreciates understated elegance and individuality.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/#shop" className="btn-red px-8 py-3.5 text-sm">Shop Now</Link>

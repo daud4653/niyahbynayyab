@@ -26,14 +26,17 @@ export default function Navbar() {
         scrolled ? 'shadow-md shadow-black/5 border-b border-border' : 'border-b border-transparent'
       }`}
     >
-      <div className="max-w-6xl mx-auto px-6 flex items-center h-[88px] gap-8">
+      <div className="max-w-6xl mx-auto px-6 flex items-center h-[108px] gap-8">
         {/* Logo — left-aligned, fits in navbar height */}
-        <Link to="/" className="-ml-3 md:ml-0 flex-shrink-0 flex items-center">
-          <img
-            src={logo}
-            alt="niyah"
-            className="h-[96px] w-auto object-contain mix-blend-multiply opacity-95"
-          />
+        <Link to="/" className="flex-shrink-0 flex items-center">
+          <div className="relative overflow-hidden h-[120px] w-[130px]">
+            <img
+              src={logo}
+              alt="niyah"
+              className="absolute top-0 h-[120px] w-auto mix-blend-multiply opacity-95"
+              style={{ left: '-25px' }}
+            />
+          </div>
         </Link>
 
         {/* Desktop nav */}
