@@ -6,6 +6,10 @@ import { sendAdminNewOrderEmail, sendCustomerStatusEmail } from '../services/ema
 
 const ALLOWED_STATUS = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
+function normalizeOrderStatus(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
 function normalizeCustomer(customer = {}) {
   return {
     firstName: String(customer.firstName || '').trim(),
@@ -212,9 +216,10 @@ export async function createOrder(req, res) {
 export async function listOrders(_req, res) {
   const { status, q } = _req.query || {};
   const query = {};
+  const normalizedStatus = normalizeOrderStatus(status);
 
-  if (status && ALLOWED_STATUS.includes(String(status))) {
-    query.status = String(status);
+  if (normalizedStatus && ALLOWED_STATUS.includes(normalizedStatus)) {
+    query.status = normalizedStatus;
   }
 
   if (q && String(q).trim()) {
@@ -241,19 +246,19 @@ export async function listOrders(_req, res) {
 
 export async function updateOrderStatus(req, res) {
   const { id } = req.params;
-  const { status } = req.body || {};
+  const nextStatus = normalizeOrderStatus(req.body?.status);
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ message: 'Invalid order id' });
   }
 
-  if (!status || !ALLOWED_STATUS.includes(String(status))) {
+  if (!nextStatus || !ALLOWED_STATUS.includes(nextStatus)) {
     return res.status(400).json({ message: 'Invalid status value' });
   }
 
   const updated = await Order.findByIdAndUpdate(
     id,
-    { status: String(status) },
+    { status: nextStatus },
     { new: true, runValidators: true }
   );
 

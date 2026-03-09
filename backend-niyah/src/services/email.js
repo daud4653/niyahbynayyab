@@ -8,7 +8,7 @@ function getResend() {
   return _resend;
 }
 
-const FROM = 'niyah <onboarding@resend.dev>';
+const FROM = env.emailFrom;
 const RED = '#cc0000';
 const CREAM = '#f5f0ee';
 

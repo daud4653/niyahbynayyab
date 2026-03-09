@@ -18,6 +18,7 @@ export const env = {
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
   resendApiKey:        process.env.RESEND_API_KEY        || '',
   adminEmail:          process.env.ADMIN_EMAIL           || '',
+  emailFrom:           process.env.EMAIL_FROM            || 'niyah <onboarding@resend.dev>',
 };
 
 if (!env.mongoUri) {

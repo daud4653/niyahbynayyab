@@ -12,6 +12,11 @@ const EMPTY_FORM = {
 
 const ORDER_STATUSES = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
+function statusLabel(status) {
+  const value = String(status || '').trim();
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const token = sessionStorage.getItem('niyah_admin_token');
@@ -466,7 +471,7 @@ export default function Dashboard() {
                 <label className={lbl}>Status</label>
                 <select value={orderStatusFilter} onChange={(e) => setOrderStatusFilter(e.target.value)} className={`${input} select-field`}>
                   <option value="all">All</option>
-                  {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {ORDER_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                 </select>
               </div>
               <button onClick={loadOrders} className="btn-red rounded-xl px-5 py-2.5 text-xs">Apply</button>
@@ -487,7 +492,7 @@ export default function Dashboard() {
                       <p className="text-xs font-bold tracking-wider uppercase text-ink-muted">Status</p>
                       <div className="flex items-center gap-2 mt-1">
                         <select value={orderDraftStatus[order._id] || order.status} onChange={(e) => setOrderDraftStatus((p) => ({ ...p, [order._id]: e.target.value }))} className="select-field text-sm bg-cream border border-border rounded-lg px-2.5 py-1.5">
-                          {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                          {ORDER_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                         </select>
                         <button onClick={() => handleUpdateOrderStatus(order._id)} disabled={updatingOrderId === order._id} className="text-xs font-bold px-3 py-2 rounded-lg bg-red-brand text-white disabled:opacity-60">
                           {updatingOrderId === order._id ? '...' : 'Update'}
