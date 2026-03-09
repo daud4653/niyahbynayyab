@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [orderDraftStatus, setOrderDraftStatus] = useState({});
   const [updatingOrderId, setUpdatingOrderId] = useState('');
+  const [orderStatusNotice, setOrderStatusNotice] = useState({});
 
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwError, setPwError] = useState('');
@@ -202,15 +203,35 @@ export default function Dashboard() {
     if (!token || !orderId) return;
     const nextStatus = orderDraftStatus[orderId];
     if (!nextStatus) return;
+
+    const currentStatus = orders.find((order) => order._id === orderId)?.status;
+    if (currentStatus === nextStatus) {
+      setOrderStatusNotice((prev) => ({ ...prev, [orderId]: 'No changes to save' }));
+      return;
+    }
+
     setUpdatingOrderId(orderId);
+    setOrdersError('');
     try {
-      await apiRequest(`/orders/${orderId}/status`, { method: 'PATCH', token, body: { status: nextStatus } });
-      await loadOrders();
+      const updated = await apiRequest(`/orders/${orderId}/status`, { method: 'PATCH', token, body: { status: nextStatus } });
+      setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
+      setOrderDraftStatus((prev) => ({ ...prev, [orderId]: updated.status }));
+      setOrderStatusNotice((prev) => ({ ...prev, [orderId]: 'Status updated' }));
     } catch (err) {
       setOrdersError(err.message || 'Failed to update');
+      setOrderStatusNotice((prev) => ({ ...prev, [orderId]: 'Update failed' }));
       if (/invalid|expired|missing/i.test(err.message || '')) handleLogout();
     } finally {
-      setUpdatingOrderId(''); }
+      setUpdatingOrderId('');
+      setTimeout(() => {
+        setOrderStatusNotice((prev) => {
+          if (!prev[orderId]) return prev;
+          const next = { ...prev };
+          delete next[orderId];
+          return next;
+        });
+      }, 2000);
+    }
   }
 
   async function handleChangePassword(e) {
@@ -495,9 +516,14 @@ export default function Dashboard() {
                           {ORDER_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                         </select>
                         <button onClick={() => handleUpdateOrderStatus(order._id)} disabled={updatingOrderId === order._id} className="text-xs font-bold px-3 py-2 rounded-lg bg-red-brand text-white disabled:opacity-60">
-                          {updatingOrderId === order._id ? '...' : 'Update'}
+                          {updatingOrderId === order._id ? 'Saving...' : 'Save Status'}
                         </button>
                       </div>
+                      {!!orderStatusNotice[order._id] && (
+                        <p className={`text-[11px] mt-1 ${/failed/i.test(orderStatusNotice[order._id]) ? 'text-red-brand' : 'text-ink-muted'}`}>
+                          {orderStatusNotice[order._id]}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="grid lg:grid-cols-2 gap-4">
