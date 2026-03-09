@@ -268,10 +268,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-3">
             <img src={logo} alt="niyah" className="h-[72px] w-auto object-contain mix-blend-multiply opacity-95" />
             <div className="flex items-center gap-1.5">
-              {[['products', 'Products'], ['orders', 'Orders'], ['settings', '⚙']].map(([key, lbl]) => (
+              {[['products', 'Products'], ['orders', 'Orders'], ['settings', 'Settings']].map(([key, lbl]) => (
                 <button key={key} onClick={() => setTab(key)} className={`px-3 py-1.5 rounded-xl text-xs font-bold ${tab === key ? 'bg-red-brand text-white' : 'bg-white border border-border text-ink'}`}>{lbl}</button>
               ))}
-              <button onClick={handleLogout} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-border text-ink">Out</button>
+              <button onClick={handleLogout} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-border text-ink">Logout</button>
             </div>
           </div>
         </div>
