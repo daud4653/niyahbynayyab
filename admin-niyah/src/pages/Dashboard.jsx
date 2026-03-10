@@ -39,6 +39,8 @@ export default function Dashboard() {
   const [orderDraftStatus, setOrderDraftStatus] = useState({});
   const [updatingOrderId, setUpdatingOrderId] = useState('');
   const [orderStatusNotice, setOrderStatusNotice] = useState({});
+  const [bulkStatusNotice, setBulkStatusNotice] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwError, setPwError] = useState('');
@@ -232,6 +234,47 @@ export default function Dashboard() {
         });
       }, 2000);
     }
+  }
+
+  const pendingOrderStatusCount = useMemo(
+    () => orders.filter((order) => (orderDraftStatus[order._id] || order.status) !== order.status).length,
+    [orders, orderDraftStatus]
+  );
+
+  async function handleSaveAllOrderStatuses() {
+    if (!token) return;
+    const pending = orders
+      .map((order) => ({
+        id: order._id,
+        current: order.status,
+        next: orderDraftStatus[order._id] || order.status,
+      }))
+      .filter((order) => order.current !== order.next);
+
+    if (pending.length === 0) {
+      setBulkStatusNotice('No status changes to save');
+      return;
+    }
+
+    setBulkSaving(true);
+    setOrdersError('');
+    let failures = 0;
+    for (const { id, next } of pending) {
+      try {
+        const updated = await apiRequest(`/orders/${id}/status`, { method: 'PATCH', token, body: { status: next } });
+        setOrders((prev) => prev.map((order) => (order._id === id ? updated : order)));
+        setOrderDraftStatus((prev) => ({ ...prev, [id]: updated.status }));
+        setOrderStatusNotice((prev) => ({ ...prev, [id]: 'Status updated' }));
+      } catch (err) {
+        failures += 1;
+        setOrderStatusNotice((prev) => ({ ...prev, [id]: 'Update failed' }));
+        if (/invalid|expired|missing/i.test(err.message || '')) handleLogout();
+      }
+    }
+
+    setBulkStatusNotice(failures ? `Saved with ${failures} failure${failures === 1 ? '' : 's'}` : 'All status changes saved');
+    setBulkSaving(false);
+    setTimeout(() => setBulkStatusNotice(''), 2500);
   }
 
   async function handleChangePassword(e) {
@@ -515,17 +558,14 @@ export default function Dashboard() {
                         <select value={orderDraftStatus[order._id] || order.status} onChange={(e) => setOrderDraftStatus((p) => ({ ...p, [order._id]: e.target.value }))} className="select-field text-sm bg-cream border border-border rounded-lg px-2.5 py-1.5">
                           {ORDER_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                         </select>
-                        <button onClick={() => handleUpdateOrderStatus(order._id)} disabled={updatingOrderId === order._id} className="text-xs font-bold px-3 py-2 rounded-lg bg-red-brand text-white disabled:opacity-60">
-                          {updatingOrderId === order._id ? 'Saving...' : 'Save Status'}
-                        </button>
                       </div>
-                      {!!orderStatusNotice[order._id] && (
-                        <p className={`text-[11px] mt-1 ${/failed/i.test(orderStatusNotice[order._id]) ? 'text-red-brand' : 'text-ink-muted'}`}>
-                          {orderStatusNotice[order._id]}
-                        </p>
-                      )}
                     </div>
                   </div>
+                  {!!orderStatusNotice[order._id] && (
+                    <p className={`text-[11px] mt-2 ${/failed/i.test(orderStatusNotice[order._id]) ? 'text-red-brand' : 'text-ink-muted'}`}>
+                      {orderStatusNotice[order._id]}
+                    </p>
+                  )}
                   <div className="grid lg:grid-cols-2 gap-4">
                     <div className="bg-cream rounded-xl p-4">
                       <p className="text-xs font-bold tracking-wider uppercase text-ink-muted mb-2">Customer</p>
@@ -565,6 +605,17 @@ export default function Dashboard() {
                   )}
                 </article>
               ))}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              {bulkStatusNotice && (
+                <p className={`text-xs ${/failure|failed/i.test(bulkStatusNotice) ? 'text-red-brand' : 'text-ink-muted'}`}>
+                  {bulkStatusNotice}
+                </p>
+              )}
+              <button onClick={handleSaveAllOrderStatuses} disabled={bulkSaving || pendingOrderStatusCount === 0} className="btn-red rounded-xl px-5 py-2.5 text-xs disabled:opacity-60">
+                {bulkSaving ? 'Saving...' : pendingOrderStatusCount > 0 ? `Save ${pendingOrderStatusCount} Status${pendingOrderStatusCount === 1 ? '' : 'es'}` : 'Save Status'}
+              </button>
             </div>
           </>
         )}
