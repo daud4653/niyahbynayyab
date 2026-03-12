@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useProduct } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
@@ -11,6 +11,7 @@ export default function ProductDetail() {
   const [selectedSizes, setSelectedSizes] = useState({});
   const [added, setAdded] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const touchStartX = useRef(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -69,6 +70,27 @@ export default function ProductDetail() {
 
   const displayImage = images[activeImg] || product.image;
 
+  function goPrev() {
+    setActiveImg((i) => (i === 0 ? images.length - 1 : i - 1));
+  }
+
+  function goNext() {
+    setActiveImg((i) => (i === images.length - 1 ? 0 : i + 1));
+  }
+
+  function handleTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e) {
+    if (touchStartX.current === null) return;
+    const delta = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(delta) > 50) {
+      delta > 0 ? goNext() : goPrev();
+    }
+    touchStartX.current = null;
+  }
+
   return (
     <main className="pt-[108px] min-h-screen bg-cream">
       <div className="max-w-6xl mx-auto px-6 py-12">
@@ -82,11 +104,45 @@ export default function ProductDetail() {
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* Image gallery */}
           <div className="md:sticky md:top-24 flex flex-col gap-3">
-            <div className="aspect-[4/5] rounded-[2rem] overflow-hidden bg-cream-dark shadow-xl">
+            <div
+              className="relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-cream-dark shadow-xl select-none"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               {displayImage ? (
                 <img src={displayImage} alt={product.name} loading="eager" fetchpriority="high" decoding="sync" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-ink-muted text-sm">No image</div>
+              )}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={goPrev}
+                    aria-label="Previous image"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-md hover:bg-white transition-colors"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+                  </button>
+                  <button
+                    onClick={goNext}
+                    aria-label="Next image"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-md hover:bg-white transition-colors"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {images.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveImg(idx)}
+                        aria-label={`Go to image ${idx + 1}`}
+                        className={`w-1.5 h-1.5 rounded-full transition-all ${
+                          activeImg === idx ? 'bg-white w-4' : 'bg-white/60'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
