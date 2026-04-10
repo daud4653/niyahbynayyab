@@ -50,6 +50,7 @@ export default function Dashboard() {
 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [chartUploading, setChartUploading] = useState({});
 
   useEffect(() => {
     if (!token) navigate('/');
@@ -151,7 +152,7 @@ export default function Dashboard() {
   function removeImageField(idx) { setForm((p) => { const imgs = p.images.filter((_, i) => i !== idx); return { ...p, images: imgs.length ? imgs : [''] }; }); }
 
   function addSizeChart() {
-    setForm((p) => ({ ...p, sizeCharts: [...p.sizeCharts, { name: '', unit: 'inches', columns: [], rows: {} }] }));
+    setForm((p) => ({ ...p, sizeCharts: [...p.sizeCharts, { name: '', image: '' }] }));
     setSaved('');
   }
   function removeSizeChart(chartIdx) {
@@ -166,48 +167,21 @@ export default function Dashboard() {
     });
     setSaved('');
   }
-  function handleSizeChartColumn(chartIdx, colIdx, val) {
-    setForm((p) => {
-      const charts = [...p.sizeCharts];
-      const columns = [...charts[chartIdx].columns];
-      columns[colIdx] = val;
-      charts[chartIdx] = { ...charts[chartIdx], columns };
-      return { ...p, sizeCharts: charts };
-    });
-    setSaved('');
-  }
-  function addSizeChartColumn(chartIdx) {
-    setForm((p) => {
-      const charts = [...p.sizeCharts];
-      charts[chartIdx] = { ...charts[chartIdx], columns: [...charts[chartIdx].columns, ''] };
-      return { ...p, sizeCharts: charts };
-    });
-    setSaved('');
-  }
-  function removeSizeChartColumn(chartIdx, colIdx) {
-    setForm((p) => {
-      const charts = [...p.sizeCharts];
-      const columns = charts[chartIdx].columns.filter((_, i) => i !== colIdx);
-      const rows = {};
-      for (const [size, vals] of Object.entries(charts[chartIdx].rows || {})) {
-        rows[size] = (vals || []).filter((_, i) => i !== colIdx);
-      }
-      charts[chartIdx] = { ...charts[chartIdx], columns, rows };
-      return { ...p, sizeCharts: charts };
-    });
-    setSaved('');
-  }
-  function handleSizeChartCell(chartIdx, size, colIdx, val) {
-    setForm((p) => {
-      const charts = [...p.sizeCharts];
-      const rows = { ...charts[chartIdx].rows };
-      const row = [...(rows[size] || [])];
-      row[colIdx] = val;
-      rows[size] = row;
-      charts[chartIdx] = { ...charts[chartIdx], rows };
-      return { ...p, sizeCharts: charts };
-    });
-    setSaved('');
+  async function handleSizeChartImageUpload(chartIdx, e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setChartUploading((prev) => ({ ...prev, [chartIdx]: true }));
+    try {
+      const formData = new FormData();
+      formData.append('images', file);
+      const data = await apiRequest('/upload', { method: 'POST', token, body: formData });
+      handleSizeChartField(chartIdx, 'image', data.urls[0]);
+    } catch (err) {
+      setUploadError(err.message || 'Upload failed');
+    } finally {
+      setChartUploading((prev) => ({ ...prev, [chartIdx]: false }));
+      e.target.value = '';
+    }
   }
 
   async function handleSave(e) {
@@ -570,7 +544,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between border-b border-border pb-3 mb-5">
                     <div>
                       <h2 className="font-brand font-bold text-base text-ink">Size Charts</h2>
-                      <p className="text-[11px] text-ink-muted mt-0.5">Add one or more measurement guides (e.g. Tops, Bottoms)</p>
+                      <p className="text-[11px] text-ink-muted mt-0.5">Upload size chart images (e.g. Tops, Bottoms)</p>
                     </div>
                     <button type="button" onClick={addSizeChart} className="btn-red rounded-xl px-4 py-2 text-xs">+ Add Chart</button>
                   </div>
@@ -579,27 +553,19 @@ export default function Dashboard() {
                     <p className="text-sm text-ink-muted italic">No size charts yet.</p>
                   )}
 
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {form.sizeCharts.map((chart, chartIdx) => {
-                      const parsedSizes = form.sizesText.split(',').map((s) => s.trim()).filter(Boolean);
+                      const isUploading = !!chartUploading[chartIdx];
                       return (
                         <div key={chartIdx} className="border border-border rounded-xl p-4">
-                          {/* Chart header row */}
+                          {/* Name + Remove */}
                           <div className="flex items-center gap-3 mb-4">
                             <input
                               value={chart.name}
                               onChange={(e) => handleSizeChartField(chartIdx, 'name', e.target.value)}
-                              placeholder={`Chart name (e.g. Tops, Bottoms)`}
+                              placeholder="Chart name (e.g. Tops, Bottoms)"
                               className={`${input} flex-1`}
                             />
-                            <select
-                              value={chart.unit || 'inches'}
-                              onChange={(e) => handleSizeChartField(chartIdx, 'unit', e.target.value)}
-                              className={`${input} w-28 flex-shrink-0`}
-                            >
-                              <option value="inches">Inches</option>
-                              <option value="cm">CM</option>
-                            </select>
                             <button
                               type="button"
                               onClick={() => removeSizeChart(chartIdx)}
@@ -607,70 +573,37 @@ export default function Dashboard() {
                             >Remove</button>
                           </div>
 
-                          {/* Columns */}
-                          <div className="mb-4">
-                            <label className={lbl}>Measurements (columns)</label>
-                            <div className="space-y-2">
-                              {chart.columns.map((col, colIdx) => (
-                                <div key={colIdx} className="flex gap-2 items-center">
-                                  <input
-                                    value={col}
-                                    onChange={(e) => handleSizeChartColumn(chartIdx, colIdx, e.target.value)}
-                                    placeholder={`e.g. ${['Chest', 'Waist', 'Hips', 'Length'][colIdx] || 'Measurement'}`}
-                                    className={`${input} flex-1`}
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => removeSizeChartColumn(chartIdx, colIdx)}
-                                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-ink-muted hover:text-red-brand border border-border rounded-xl hover:border-red-brand/40 transition-colors"
-                                  >×</button>
-                                </div>
-                              ))}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => addSizeChartColumn(chartIdx)}
-                              className="mt-2 text-xs font-bold text-red-brand hover:text-red-hover flex items-center gap-1 transition-colors"
-                            >+ Add measurement</button>
-                          </div>
+                          {/* Image upload */}
+                          <label className={lbl}>Size Chart Image</label>
+                          <label className={`relative flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed rounded-2xl py-5 px-4 cursor-pointer transition-colors mb-3 ${isUploading ? 'border-red-brand/40 bg-red-light/30' : 'border-border hover:border-red-brand/50 hover:bg-cream-dark/40'}`}>
+                            <input type="file" accept="image/*" className="sr-only" onChange={(e) => handleSizeChartImageUpload(chartIdx, e)} disabled={isUploading} />
+                            {isUploading ? (
+                              <div className="flex items-center gap-2 text-red-brand">
+                                <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                                <span className="text-sm font-semibold">Uploading...</span>
+                              </div>
+                            ) : (
+                              <>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted">
+                                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <span className="text-sm font-semibold text-ink-mid">Click to upload size chart image</span>
+                                <span className="text-xs text-ink-muted">PNG, JPG, WEBP</span>
+                              </>
+                            )}
+                          </label>
 
-                          {/* Measurement table */}
-                          {parsedSizes.length > 0 && chart.columns.filter(Boolean).length > 0 && (
-                            <div className="overflow-x-auto">
-                              <label className={lbl}>Values per size</label>
-                              <table className="w-full text-sm mt-2">
-                                <thead>
-                                  <tr className="border-b border-border">
-                                    <th className="text-left text-[11px] font-bold tracking-wide uppercase text-ink-muted pb-2 pr-4 w-16">Size</th>
-                                    {chart.columns.map((col, idx) => (
-                                      <th key={idx} className="text-left text-[11px] font-bold tracking-wide uppercase text-ink-muted pb-2 px-2">{col || `Col ${idx + 1}`}</th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {parsedSizes.map((size) => (
-                                    <tr key={size} className="border-b border-border/50">
-                                      <td className="py-2 pr-4 font-bold text-ink text-xs">{size}</td>
-                                      {chart.columns.map((_, colIdx) => (
-                                        <td key={colIdx} className="py-2 px-2">
-                                          <input
-                                            type="text"
-                                            value={(chart.rows?.[size] || [])[colIdx] || ''}
-                                            onChange={(e) => handleSizeChartCell(chartIdx, size, colIdx, e.target.value)}
-                                            placeholder="—"
-                                            className="w-20 font-body text-sm text-ink bg-cream border border-border rounded-lg px-2 py-1.5 outline-none focus:border-red-brand focus:ring-1 focus:ring-red-brand/10"
-                                          />
-                                        </td>
-                                      ))}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
+                          {/* Or paste URL */}
+                          <input
+                            value={chart.image}
+                            onChange={(e) => handleSizeChartField(chartIdx, 'image', e.target.value)}
+                            placeholder="Or paste image URL"
+                            className={input}
+                          />
 
-                          {parsedSizes.length === 0 && (
-                            <p className="text-xs text-ink-muted italic">Add sizes above first to fill in measurements.</p>
+                          {/* Preview */}
+                          {chart.image && (
+                            <img src={chart.image} alt="Size chart preview" className="mt-3 rounded-xl border border-border max-h-48 object-contain w-full bg-cream" />
                           )}
                         </div>
                       );

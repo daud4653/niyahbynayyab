@@ -233,8 +233,8 @@ export default function ProductDetail() {
             {(() => {
               const charts = Array.isArray(product.sizeCharts) && product.sizeCharts.length > 0
                 ? product.sizeCharts
-                : product.sizeChart ? [product.sizeChart] : [];
-              const validCharts = charts.filter((c) => (c.columns || []).filter(Boolean).length > 0);
+                : [];
+              const validCharts = charts.filter((c) => c.image);
               if (!validCharts.length) return null;
               return (
                 <div className="border border-border rounded-2xl overflow-hidden">
@@ -258,29 +258,14 @@ export default function ProductDetail() {
                           </svg>
                         </button>
                         {isOpen && (
-                          <div className="border-t border-border overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead className="bg-cream">
-                                <tr>
-                                  <th className="text-left text-[11px] font-bold tracking-widest uppercase text-ink-muted px-5 py-3">Size</th>
-                                  {chart.columns.filter(Boolean).map((col) => (
-                                    <th key={col} className="text-left text-[11px] font-bold tracking-widest uppercase text-ink-muted px-4 py-3 whitespace-nowrap">
-                                      {col} <span className="normal-case font-normal">({chart.unit || 'in'})</span>
-                                    </th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {Object.entries(chart.rows || {}).map(([size, vals], rowIdx) => (
-                                  <tr key={size} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-cream/50'}>
-                                    <td className="px-5 py-3 font-bold text-ink">{size}</td>
-                                    {chart.columns.filter(Boolean).map((_, colIdx) => (
-                                      <td key={colIdx} className="px-4 py-3 text-ink-mid">{(vals || [])[colIdx] || '—'}</td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                          <div className="border-t border-border p-4">
+                            <img
+                              src={chart.image}
+                              alt={chart.name || `Size chart ${chartIdx + 1}`}
+                              className="w-full rounded-xl object-contain"
+                              loading="lazy"
+                              decoding="async"
+                            />
                           </div>
                         )}
                       </div>
