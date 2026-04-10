@@ -11,6 +11,7 @@ export default function ProductDetail() {
   const [selectedSizes, setSelectedSizes] = useState({});
   const [added, setAdded] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const [openChartIdx, setOpenChartIdx] = useState(null);
   const touchStartX = useRef(null);
 
   useEffect(() => {
@@ -228,6 +229,66 @@ export default function ProductDetail() {
                 </div>
               </div>
             )}
+
+            {(() => {
+              const charts = Array.isArray(product.sizeCharts) && product.sizeCharts.length > 0
+                ? product.sizeCharts
+                : product.sizeChart ? [product.sizeChart] : [];
+              const validCharts = charts.filter((c) => (c.columns || []).filter(Boolean).length > 0);
+              if (!validCharts.length) return null;
+              return (
+                <div className="border border-border rounded-2xl overflow-hidden">
+                  <div className="px-5 py-3.5 text-sm font-bold text-ink border-b border-border bg-cream/40">
+                    Size Guide
+                  </div>
+                  {validCharts.map((chart, chartIdx) => {
+                    const isOpen = openChartIdx === chartIdx;
+                    return (
+                      <div key={chartIdx} className={chartIdx > 0 ? 'border-t border-border' : ''}>
+                        <button
+                          onClick={() => setOpenChartIdx(isOpen ? null : chartIdx)}
+                          className="w-full flex items-center justify-between px-5 py-3 text-sm font-semibold text-ink hover:bg-cream transition-colors"
+                        >
+                          <span>{chart.name || `Chart ${chartIdx + 1}`}</span>
+                          <svg
+                            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                            className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </button>
+                        {isOpen && (
+                          <div className="border-t border-border overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-cream">
+                                <tr>
+                                  <th className="text-left text-[11px] font-bold tracking-widest uppercase text-ink-muted px-5 py-3">Size</th>
+                                  {chart.columns.filter(Boolean).map((col) => (
+                                    <th key={col} className="text-left text-[11px] font-bold tracking-widest uppercase text-ink-muted px-4 py-3 whitespace-nowrap">
+                                      {col} <span className="normal-case font-normal">({chart.unit || 'in'})</span>
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Object.entries(chart.rows || {}).map(([size, vals], rowIdx) => (
+                                  <tr key={size} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-cream/50'}>
+                                    <td className="px-5 py-3 font-bold text-ink">{size}</td>
+                                    {chart.columns.filter(Boolean).map((_, colIdx) => (
+                                      <td key={colIdx} className="px-4 py-3 text-ink-mid">{(vals || [])[colIdx] || '—'}</td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             <button
               onClick={handleAdd}

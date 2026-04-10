@@ -8,6 +8,7 @@ import logo from '../assets/logo.jpeg';
 const EMPTY_FORM = {
   name: '', category: '', tagline: '', color: '', description: '',
   price: '', inventory: '', currency: 'PKR', badge: '', images: [''], sizesText: '', sizeInventory: {},
+  sizeCharts: [],
 };
 
 const ORDER_STATUSES = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'];
@@ -92,6 +93,9 @@ export default function Dashboard() {
       images: imgs,
       sizesText: Array.isArray(selectedProduct.sizes) ? selectedProduct.sizes.join(', ') : '',
       sizeInventory: selectedProduct.sizeInventory || {},
+      sizeCharts: Array.isArray(selectedProduct.sizeCharts) && selectedProduct.sizeCharts.length > 0
+        ? selectedProduct.sizeCharts
+        : selectedProduct.sizeChart ? [selectedProduct.sizeChart] : [],
     });
   }, [selectedProduct]);
 
@@ -146,6 +150,66 @@ export default function Dashboard() {
   function addImageField() { setForm((p) => ({ ...p, images: [...p.images, ''] })); }
   function removeImageField(idx) { setForm((p) => { const imgs = p.images.filter((_, i) => i !== idx); return { ...p, images: imgs.length ? imgs : [''] }; }); }
 
+  function addSizeChart() {
+    setForm((p) => ({ ...p, sizeCharts: [...p.sizeCharts, { name: '', unit: 'inches', columns: [], rows: {} }] }));
+    setSaved('');
+  }
+  function removeSizeChart(chartIdx) {
+    setForm((p) => ({ ...p, sizeCharts: p.sizeCharts.filter((_, i) => i !== chartIdx) }));
+    setSaved('');
+  }
+  function handleSizeChartField(chartIdx, field, val) {
+    setForm((p) => {
+      const charts = [...p.sizeCharts];
+      charts[chartIdx] = { ...charts[chartIdx], [field]: val };
+      return { ...p, sizeCharts: charts };
+    });
+    setSaved('');
+  }
+  function handleSizeChartColumn(chartIdx, colIdx, val) {
+    setForm((p) => {
+      const charts = [...p.sizeCharts];
+      const columns = [...charts[chartIdx].columns];
+      columns[colIdx] = val;
+      charts[chartIdx] = { ...charts[chartIdx], columns };
+      return { ...p, sizeCharts: charts };
+    });
+    setSaved('');
+  }
+  function addSizeChartColumn(chartIdx) {
+    setForm((p) => {
+      const charts = [...p.sizeCharts];
+      charts[chartIdx] = { ...charts[chartIdx], columns: [...charts[chartIdx].columns, ''] };
+      return { ...p, sizeCharts: charts };
+    });
+    setSaved('');
+  }
+  function removeSizeChartColumn(chartIdx, colIdx) {
+    setForm((p) => {
+      const charts = [...p.sizeCharts];
+      const columns = charts[chartIdx].columns.filter((_, i) => i !== colIdx);
+      const rows = {};
+      for (const [size, vals] of Object.entries(charts[chartIdx].rows || {})) {
+        rows[size] = (vals || []).filter((_, i) => i !== colIdx);
+      }
+      charts[chartIdx] = { ...charts[chartIdx], columns, rows };
+      return { ...p, sizeCharts: charts };
+    });
+    setSaved('');
+  }
+  function handleSizeChartCell(chartIdx, size, colIdx, val) {
+    setForm((p) => {
+      const charts = [...p.sizeCharts];
+      const rows = { ...charts[chartIdx].rows };
+      const row = [...(rows[size] || [])];
+      row[colIdx] = val;
+      rows[size] = row;
+      charts[chartIdx] = { ...charts[chartIdx], rows };
+      return { ...p, sizeCharts: charts };
+    });
+    setSaved('');
+  }
+
   async function handleSave(e) {
     e.preventDefault();
     if (!token) return;
@@ -164,6 +228,7 @@ export default function Dashboard() {
       images: cleanImages, image: cleanImages[0] || '',
       sizes: parsedSizes,
       sizeInventory,
+      sizeCharts: form.sizeCharts || [],
     };
     setSaving(true);
     try {
@@ -499,6 +564,118 @@ export default function Dashboard() {
                       </div>
                     </div>
                   )}
+                </section>
+
+                <section className="bg-white rounded-2xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-border pb-3 mb-5">
+                    <div>
+                      <h2 className="font-brand font-bold text-base text-ink">Size Charts</h2>
+                      <p className="text-[11px] text-ink-muted mt-0.5">Add one or more measurement guides (e.g. Tops, Bottoms)</p>
+                    </div>
+                    <button type="button" onClick={addSizeChart} className="btn-red rounded-xl px-4 py-2 text-xs">+ Add Chart</button>
+                  </div>
+
+                  {form.sizeCharts.length === 0 && (
+                    <p className="text-sm text-ink-muted italic">No size charts yet.</p>
+                  )}
+
+                  <div className="space-y-6">
+                    {form.sizeCharts.map((chart, chartIdx) => {
+                      const parsedSizes = form.sizesText.split(',').map((s) => s.trim()).filter(Boolean);
+                      return (
+                        <div key={chartIdx} className="border border-border rounded-xl p-4">
+                          {/* Chart header row */}
+                          <div className="flex items-center gap-3 mb-4">
+                            <input
+                              value={chart.name}
+                              onChange={(e) => handleSizeChartField(chartIdx, 'name', e.target.value)}
+                              placeholder={`Chart name (e.g. Tops, Bottoms)`}
+                              className={`${input} flex-1`}
+                            />
+                            <select
+                              value={chart.unit || 'inches'}
+                              onChange={(e) => handleSizeChartField(chartIdx, 'unit', e.target.value)}
+                              className={`${input} w-28 flex-shrink-0`}
+                            >
+                              <option value="inches">Inches</option>
+                              <option value="cm">CM</option>
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => removeSizeChart(chartIdx)}
+                              className="flex-shrink-0 px-3 h-10 text-xs font-bold text-red-brand border border-red-brand/30 rounded-xl hover:bg-red-light transition-colors"
+                            >Remove</button>
+                          </div>
+
+                          {/* Columns */}
+                          <div className="mb-4">
+                            <label className={lbl}>Measurements (columns)</label>
+                            <div className="space-y-2">
+                              {chart.columns.map((col, colIdx) => (
+                                <div key={colIdx} className="flex gap-2 items-center">
+                                  <input
+                                    value={col}
+                                    onChange={(e) => handleSizeChartColumn(chartIdx, colIdx, e.target.value)}
+                                    placeholder={`e.g. ${['Chest', 'Waist', 'Hips', 'Length'][colIdx] || 'Measurement'}`}
+                                    className={`${input} flex-1`}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSizeChartColumn(chartIdx, colIdx)}
+                                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-ink-muted hover:text-red-brand border border-border rounded-xl hover:border-red-brand/40 transition-colors"
+                                  >×</button>
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => addSizeChartColumn(chartIdx)}
+                              className="mt-2 text-xs font-bold text-red-brand hover:text-red-hover flex items-center gap-1 transition-colors"
+                            >+ Add measurement</button>
+                          </div>
+
+                          {/* Measurement table */}
+                          {parsedSizes.length > 0 && chart.columns.filter(Boolean).length > 0 && (
+                            <div className="overflow-x-auto">
+                              <label className={lbl}>Values per size</label>
+                              <table className="w-full text-sm mt-2">
+                                <thead>
+                                  <tr className="border-b border-border">
+                                    <th className="text-left text-[11px] font-bold tracking-wide uppercase text-ink-muted pb-2 pr-4 w-16">Size</th>
+                                    {chart.columns.map((col, idx) => (
+                                      <th key={idx} className="text-left text-[11px] font-bold tracking-wide uppercase text-ink-muted pb-2 px-2">{col || `Col ${idx + 1}`}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {parsedSizes.map((size) => (
+                                    <tr key={size} className="border-b border-border/50">
+                                      <td className="py-2 pr-4 font-bold text-ink text-xs">{size}</td>
+                                      {chart.columns.map((_, colIdx) => (
+                                        <td key={colIdx} className="py-2 px-2">
+                                          <input
+                                            type="text"
+                                            value={(chart.rows?.[size] || [])[colIdx] || ''}
+                                            onChange={(e) => handleSizeChartCell(chartIdx, size, colIdx, e.target.value)}
+                                            placeholder="—"
+                                            className="w-20 font-body text-sm text-ink bg-cream border border-border rounded-lg px-2 py-1.5 outline-none focus:border-red-brand focus:ring-1 focus:ring-red-brand/10"
+                                          />
+                                        </td>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+
+                          {parsedSizes.length === 0 && (
+                            <p className="text-xs text-ink-muted italic">Add sizes above first to fill in measurements.</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </section>
 
                 <div className="flex items-center justify-end gap-4 pt-1">
