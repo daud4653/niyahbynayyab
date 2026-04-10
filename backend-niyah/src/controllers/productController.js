@@ -45,6 +45,7 @@ function normalizeProductPayload(body = {}) {
     color: String(body.color || '').trim(),
     category: String(body.category || '').trim(),
     isActive: body.isActive !== false,
+    sizeCharts: Array.isArray(body.sizeCharts) ? body.sizeCharts : [],
   };
 }
 
