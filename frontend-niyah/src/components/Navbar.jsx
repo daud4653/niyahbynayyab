@@ -11,7 +11,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 24);
-    window.addEventListener('scroll', fn);
+    window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
@@ -21,19 +21,21 @@ export default function Navbar() {
     }`;
 
   return (
+    /* sits below the 36px announcement bar */
     <nav
-      className={`fixed top-0 inset-x-0 z-30 bg-cream/95 backdrop-blur-md transition-all duration-300 ${
-        scrolled ? 'shadow-md shadow-black/5 border-b border-border' : 'border-b border-transparent'
+      className={`fixed top-9 inset-x-0 z-30 bg-cream/95 backdrop-blur-md transition-all duration-300 ${
+        scrolled ? 'shadow-sm shadow-black/8 border-b border-border' : 'border-b border-transparent'
       }`}
     >
-      <div className="max-w-6xl mx-auto px-6 flex items-center h-[108px] gap-8">
-        {/* Logo — left-aligned, fits in navbar height */}
+      <div className="max-w-6xl mx-auto px-6 flex items-center h-[96px] gap-8">
+
+        {/* Logo — larger, with proper whitespace crop */}
         <Link to="/" className="flex-shrink-0 flex items-center">
-          <div className="relative overflow-hidden h-[120px] w-[130px]">
+          <div className="relative overflow-hidden h-[86px] w-[162px]">
             <img
               src={logo}
               alt="niyah"
-              className="absolute top-0 h-[120px] w-auto mix-blend-multiply opacity-95"
+              className="absolute top-0 h-[86px] w-auto mix-blend-multiply opacity-95"
               style={{ left: '-25px' }}
             />
           </div>
@@ -80,14 +82,15 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 border-t border-border ${
-          menuOpen ? 'max-h-60 py-3' : 'max-h-0'
+        className={`md:hidden overflow-hidden transition-all duration-300 border-t border-border bg-cream/98 ${
+          menuOpen ? 'max-h-60 py-2' : 'max-h-0'
         }`}
       >
         {[['/', 'Home'], ['/#shop', 'Shop'], ['/#about', 'About']].map(([href, label]) => (
           <Link
             key={href}
             to={href}
+            onClick={() => setMenuOpen(false)}
             className="block px-6 py-3.5 text-sm font-semibold text-ink-mid hover:text-red-brand hover:bg-cream-dark/60 transition-colors"
           >
             {label}

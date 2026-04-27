@@ -6,36 +6,47 @@ export default function Footer() {
     <footer className="bg-ink text-cream mt-auto">
       <div className="max-w-6xl mx-auto px-6 pt-14 pb-6">
         <div className="flex flex-col md:flex-row justify-between gap-10 pb-10 border-b border-white/10">
-          <div className="max-w-xs">
-            <div className="relative overflow-hidden h-[120px] w-[130px] mb-4">
+
+          {/* Brand */}
+          <div className="max-w-[220px]">
+            <div className="relative overflow-hidden h-[56px] w-[108px] mb-5">
               <img
                 src={logo}
                 alt="niyah"
-                className="absolute top-0 h-[120px] w-auto mix-blend-screen opacity-90"
-                style={{ left: '-25px' }}
+                className="absolute top-0 h-[56px] w-auto mix-blend-screen opacity-90"
+                style={{ left: '-18px' }}
               />
             </div>
-            <p className="text-sm text-white/45 leading-relaxed">
+            <p className="text-[13px] text-white/45 leading-relaxed">
               Made with care.<br />Worn with intention.
             </p>
           </div>
 
+          {/* Links */}
           <div className="flex gap-16">
             {[
               ['Shop',   [['/#shop', 'New Arrivals'], ['/#shop', 'All Products']]],
               ['Info',   [['/#about', 'About Us'], ['https://instagram.com/niyahbynayyab', 'Instagram']]],
             ].map(([heading, links]) => (
               <div key={heading}>
-                <p className="text-[11px] font-bold tracking-[.1em] uppercase text-white/35 mb-4">{heading}</p>
+                <p className="text-[10px] font-bold tracking-[.12em] uppercase text-white/30 mb-4">{heading}</p>
                 <ul className="space-y-3">
                   {links.map(([href, label]) => (
                     <li key={label}>
                       {href.startsWith('http') ? (
-                        <a href={href} target="_blank" rel="noreferrer" className="text-sm text-white/60 hover:text-cream transition-colors duration-150">
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[13px] text-white/55 hover:text-cream transition-colors duration-150"
+                        >
                           {label}
                         </a>
                       ) : (
-                        <Link to={href} className="text-sm text-white/60 hover:text-cream transition-colors duration-150">
+                        <Link
+                          to={href}
+                          className="text-[13px] text-white/55 hover:text-cream transition-colors duration-150"
+                        >
                           {label}
                         </Link>
                       )}
@@ -47,8 +58,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-5">
-          <p className="text-[12px] text-white/25">&copy; {new Date().getFullYear()} niyah. All rights reserved.</p>
+        <div className="pt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-[11px] text-white/25">&copy; {new Date().getFullYear()} niyah. All rights reserved.</p>
+          <p className="text-[11px] text-white/20">Made in Pakistan</p>
         </div>
       </div>
     </footer>
